@@ -3,7 +3,7 @@
     <header class="header">
       <nav class="inner">
         <h1 class="title">Taco Store</h1>
-        <h1 class="cart-items">You have  items on your cart
+        <h1 class="cart-items">You have {{ items }} items on your cart
           <router-link to="/checkout">
             <i class="fa fa-shopping-cart" aria-hidden="true"></i>
           </router-link>
@@ -11,7 +11,9 @@
       </nav>
     </header>
     <transition name="fade" mode="out-in">
-      <router-view class="view"></router-view>
+      <keep-alive>
+        <router-view class="view"></router-view>
+      </keep-alive>
     </transition>
   </div>
 </template>
@@ -19,8 +21,30 @@
 
 <script>
 /* eslint-disable */
+import bus from './bus'
+
 export default {
   name: 'app',
+  data () {
+    return {
+      cart: []
+    }
+  },
+  created () {
+    bus.$on('tacoAdded', (taco) => {
+      this.cart.push(taco);
+    })
+
+    bus.$on('tacoRemoved', ({ id }) => {
+      const index = this.cart.findIndex((taco) => taco.id === id);
+      this.cart.splice(index, 1);
+    })
+  },
+  computed: {
+    items () {
+      return this.cart.length || 0
+    }
+  }
 };
 </script>
 
