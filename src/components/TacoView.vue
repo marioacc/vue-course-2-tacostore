@@ -12,6 +12,10 @@
         <div class="tacos-list" v-if="displayedPage > 0">
             <ul>
                 <taco v-for="taco in activeItems" :key="taco.id" :taco="taco">
+                  <span class="buy">
+                    <input type="checkbox" :id="taco.id" :name="taco.id" @change="tacoChanged($event, taco)">
+                    <label :for="taco.id"></label>
+                  </span>
                 </taco>
             </ul>
         </div>
@@ -23,6 +27,7 @@
 /* eslint-disable*/
 import Taco from './Taco';
 import { fetchTacos } from '../api';
+import bus from '../bus'
 
 export default {
     name: 'taco-view',
@@ -50,7 +55,22 @@ export default {
             return this.page < this.maxPage;
         },
     },
+    methods: {
+      tacoChanged(event, taco) {
+        if (event.target.checked) {
+          console.log(taco)
+          bus.$emit('tacoAdded', taco);
+          return
+        }
+        bus.$emit('tacoRemoved', taco);
+      }
+    },
     created() {
+      bus.$on('getTaco', (id) => {
+          const taco = this.tacos.find(taco => taco.id === id)
+          bus.$emit('sendTaco', taco)
+      });
+
         fetchTacos()
             .then((response) => {
                 this.tacos = response.data.tacos;

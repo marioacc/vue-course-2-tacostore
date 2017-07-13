@@ -21,6 +21,7 @@
             </span>
         </span>
         <span class="type" >{{ taco.type }}</span>
+        <slot></slot>
     </li>
 </template>
 
