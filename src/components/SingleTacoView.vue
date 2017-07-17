@@ -19,22 +19,16 @@
 </template>
 
 <script>
-import bus from '../bus'
 
 export default {
   name: 'taco-view',
   data () {
-    return {
-      taco: {}
+    return {}
+  },
+  computed: {
+    taco () {
+      return this.$store.state.tacos[this.$route.params.id]
     }
-  },
-  created () {
-    bus.$on('sendTaco', (taco) => {
-      this.taco = taco
-    })
-  },
-  activated () {
-    bus.$emit('getTaco', this.$route.params.id)
   }
 }
 </script>
