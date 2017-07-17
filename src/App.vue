@@ -11,9 +11,7 @@
       </nav>
     </header>
     <transition name="fade" mode="out-in">
-      <keep-alive>
         <router-view class="view"></router-view>
-      </keep-alive>
     </transition>
   </div>
 </template>
@@ -31,18 +29,10 @@ export default {
     }
   },
   created () {
-    bus.$on('tacoAdded', (taco) => {
-      this.cart.push(taco);
-    })
-
-    bus.$on('tacoRemoved', ({ id }) => {
-      const index = this.cart.findIndex((taco) => taco.id === id);
-      this.cart.splice(index, 1);
-    })
   },
   computed: {
     items () {
-      return this.cart.length || 0
+      return this.$store.getters.itemsOnCart || 0
     }
   }
 };
@@ -91,7 +81,7 @@ a
     font-size 1em
     position absolute
     right 40px
-    i 
+    i
       font-size: 2em;
       vertical-align: middle;
       color white
