@@ -9,11 +9,11 @@
             <router-link v-if="hasMore" :to="'/tacos/' + (page + 1)">more &gt;</router-link>
             <a v-else class="disabled">more &gt;</a>
         </div>
-        <div class="tacos-list" v-if="displayedPage > 0">
+        <div class="tacos-list" v-if="page > 0">
             <ul>
-                <taco v-for="taco in activeItems" :key="taco.id" :taco="taco">
+                <taco v-for="taco in displayedItems" :key="taco.id" :taco="taco">
                   <span class="buy">
-                    <input type="checkbox" :id="taco.id" :name="taco.id" @change="tacoChanged($event, taco)">
+                    <input type="checkbox" :id="taco.id" :name="taco.id" :checked="isTacoInCart(taco.id)" @change="updateCart($event, taco)">
                     <label :for="taco.id"></label>
                   </span>
                 </taco>
@@ -34,48 +34,53 @@ export default {
     components: { Taco },
     data() {
         return {
-            displayedPage: 1,
             itemsPerPage: 3,
-            tacos: [],
+            displayedItems: this.$store.getters.activeTacos,
         };
     },
     computed: {
         page() {
-            return Number(this.$route.params.page) || 1;
+            return Number(this.$store.state.route.params.page) || 1;
         },
         maxPage() {
-            return Math.ceil(this.tacos.length / this.itemsPerPage);
-        },
-        activeItems() {
-            const start = (this.page - 1) * this.itemsPerPage;
-            const end = this.page * this.itemsPerPage;
-            return this.tacos.slice(start, end);
+          const { itemsPerPage, tacos } = this.$store.state
+          return Math.ceil(Object.keys(tacos).length /  itemsPerPage);
         },
         hasMore() {
             return this.page < this.maxPage;
         },
     },
-    methods: {
-      tacoChanged(event, taco) {
-        if (event.target.checked) {
-          console.log(taco)
-          bus.$emit('tacoAdded', taco);
-          return
-        }
-        bus.$emit('tacoRemoved', taco);
+    watch: {
+      page(to, from) {
+        this.loadItems(to, from)
       }
     },
-    created() {
-      bus.$on('getTaco', (id) => {
-          const taco = this.tacos.find(taco => taco.id === id)
-          bus.$emit('sendTaco', taco)
-      });
-
-        fetchTacos()
-            .then((response) => {
-                this.tacos = response.data.tacos;
-            });
+    methods: {
+      isTacoInCart (id) {
+      return this.$store.state.cart.some((item) => item.id === id)
+      },
+      updateCart(event, taco) {
+        const { id } = taco
+        if (event.target.checked) {
+          this.$store.commit('ADD_TACO', { taco })
+          return
+        }
+        this.$store.commit('REMOVE_TACO', { id })
+      },
+      loadItems(to = this.page) {
+        this.$store.dispatch('fetchTacos')
+        .then(() => {
+          if (this.page < 0 || this.page > this.maxPage) {
+            this.$router.replace(`/tacos/1`)
+            return
+          }
+          this.displayedItems = this.$store.getters.activeTacos
+        })
+      }
     },
+    beforeMount () {
+      this.loadItems(this.page)
+    }
 };
 </script>
 
@@ -86,7 +91,7 @@ export default {
 .tacos-list-nav, .tacos-list
   background-color #fff
   border-radius 2px
-  
+
 .search-nav
   display flex
   height 30px
@@ -162,7 +167,7 @@ export default {
     top -3px
     left -3px
     background #ccc
-    
+
 
 @media (max-width 600px)
   .tacos-list
