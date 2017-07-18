@@ -11,7 +11,11 @@
         </div>
         <div class="tacos-list" v-if="displayedPage > 0">
             <ul>
-                <taco v-for="taco in activeItems" :key="taco.id" :taco="taco">
+                <taco v-for="taco in displayedItems" :key="taco.id" :taco="taco">
+                  <span class="buy">
+                    <input type="checkbox" :id="taco.id" :name="taco.id"  :checked="isTacoInCart(taco.id)" @change="tacoChanged($event, taco)">
+                    <label :for="taco.id"></label>
+                  </span>
                 </taco>
             </ul>
         </div>
@@ -22,7 +26,6 @@
 <script>
 /* eslint-disable*/
 import Taco from './Taco';
-import { fetchTacos } from '../api';
 
 export default {
     name: 'taco-view',
@@ -30,8 +33,7 @@ export default {
     data() {
         return {
             displayedPage: 1,
-            itemsPerPage: 3,
-            tacos: [],
+            displayedItems: this.$store.getters.activeTacos,
         };
     },
     computed: {
@@ -39,22 +41,41 @@ export default {
             return Number(this.$route.params.page) || 1;
         },
         maxPage() {
-            return Math.ceil(this.tacos.length / this.itemsPerPage);
-        },
-        activeItems() {
-            const start = (this.page - 1) * this.itemsPerPage;
-            const end = this.page * this.itemsPerPage;
-            return this.tacos.slice(start, end);
+            const { itemsPerPage, tacos } = this.$store.state
+            return Math.ceil(Object.keys(tacos).length / itemsPerPage);
         },
         hasMore() {
             return this.page < this.maxPage;
         },
     },
+    watch: {
+      page (to, from) {
+       this.loadItems(to, from)
+      }
+    },
+    methods: {
+      tacoChanged(event, taco) {
+        if (event.target.checked) {
+          this.$store.commit('ADD_TACO', { taco })
+          return
+        }
+        this.$store.commit('REMOVE_TACO', { id: taco.id })
+      },
+      loadItems(to = this.page, from = -1) {
+        this.$store.dispatch('fetchTacos')
+        .then(() => {
+          this.displayedItems = this.$store.getters.activeTacos
+        })
+      },
+      isTacoInCart (id) {
+        return this.$store.state.cart.some(item => item.id === id)
+      }
+    },
     created() {
-        fetchTacos()
-            .then((response) => {
-                this.tacos = response.data.tacos;
-            });
+      this.$store.dispatch('fetchTacos')
+      .then(() => {
+
+      })
     },
 };
 </script>
@@ -66,7 +87,7 @@ export default {
 .tacos-list-nav, .tacos-list
   background-color #fff
   border-radius 2px
-  
+
 .search-nav
   display flex
   height 30px
@@ -142,7 +163,7 @@ export default {
     top -3px
     left -3px
     background #ccc
-    
+
 
 @media (max-width 600px)
   .tacos-list

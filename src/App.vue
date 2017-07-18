@@ -11,7 +11,7 @@
       </nav>
     </header>
     <transition name="fade" mode="out-in">
-      <router-view class="view"></router-view>
+        <router-view class="view"></router-view>
     </transition>
   </div>
 </template>
@@ -21,6 +21,16 @@
 /* eslint-disable */
 export default {
   name: 'app',
+  data () {
+    return {}
+  },
+  created () {
+  },
+  computed: {
+    items () {
+      return this.$store.getters.itemsOnCart
+    }
+  }
 };
 </script>
 
@@ -67,7 +77,7 @@ a
     font-size 1em
     position absolute
     right 40px
-    i 
+    i
       font-size: 2em;
       vertical-align: middle;
       color white
